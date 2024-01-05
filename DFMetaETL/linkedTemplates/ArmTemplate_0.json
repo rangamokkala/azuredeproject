@@ -12,13 +12,13 @@
 			"metadata": "Secure string for 'connectionString' of 'ls_azure_sql'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=devmetaserver.database.windows.net;Initial Catalog=Meta-DB"
 		},
-		"ls_dev_akv_properties_typeProperties_baseUrl": {
-			"type": "string",
-			"defaultValue": "https://dev-meta-akv.vault.azure.net/"
-		},
 		"ls_adls_devmeta1997_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://devmeta1997.dfs.core.windows.net/"
+		},
+		"ls_dev_akv_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://dev-meta-akv.vault.azure.net/"
 		},
 		"ls_azure_sql_properties_typeProperties_servicePrincipalId": {
 			"type": "string",
@@ -34,19 +34,6 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/ls_dev_akv')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureKeyVault",
-				"typeProperties": {
-					"baseUrl": "[parameters('ls_dev_akv_properties_typeProperties_baseUrl')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/ls_adls_devmeta1997')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -60,29 +47,17 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ls_azure_sql')]",
+			"name": "[concat(parameters('factoryName'), '/ls_dev_akv')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"type": "AzureSqlDatabase",
+				"type": "AzureKeyVault",
 				"typeProperties": {
-					"connectionString": "[parameters('ls_azure_sql_connectionString')]",
-					"servicePrincipalId": "[parameters('ls_azure_sql_properties_typeProperties_servicePrincipalId')]",
-					"servicePrincipalKey": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "ls_dev_akv",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "dev-etl-sp-secret"
-					},
-					"tenant": "[parameters('ls_azure_sql_properties_typeProperties_tenant')]"
+					"baseUrl": "[parameters('ls_dev_akv_properties_typeProperties_baseUrl')]"
 				}
 			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dev_akv')]"
-			]
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ds_generic_adls_csv')]",
@@ -128,6 +103,31 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ls_azure_sql')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('ls_azure_sql_connectionString')]",
+					"servicePrincipalId": "[parameters('ls_azure_sql_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ls_dev_akv",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "dev-etl-sp-secret"
+					},
+					"tenant": "[parameters('ls_azure_sql_properties_typeProperties_tenant')]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_dev_akv')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_generic_azure_sqldb')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -154,7 +154,14 @@
 					{
 						"name": "extract_from_sqldb",
 						"type": "Copy",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "get_last_run_date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "0.12:00:00",
 							"retry": 0,
@@ -208,6 +215,476 @@
 								}
 							}
 						]
+					},
+					{
+						"name": "log_start",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_job_task_log]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"job_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"job_status": {
+									"value": null,
+									"type": "String"
+								},
+								"status_description": {
+									"value": "started running extract task",
+									"type": "String"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_sequence": {
+									"value": "1",
+									"type": "Int32"
+								},
+								"task_status": {
+									"value": "running",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "log_success",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "update_last_run_date",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_job_task_log]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"job_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"job_status": {
+									"value": null,
+									"type": "String"
+								},
+								"status_description": {
+									"value": "task completed successfully",
+									"type": "String"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_sequence": {
+									"value": "1",
+									"type": "Int32"
+								},
+								"task_status": {
+									"value": "success",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "log_Error",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "update_control_table_failure",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_job_task_log]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"job_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"job_status": {
+									"value": null,
+									"type": "String"
+								},
+								"status_description": {
+									"value": "Task successfully failed",
+									"type": "String"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_sequence": {
+									"value": "1",
+									"type": "Int32"
+								},
+								"task_status": {
+									"value": "Error",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "update_control_table_running",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "log_start",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_update_job_control]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"job_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_status": {
+									"value": "Running",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "update_control_table_success",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "extract_from_sqldb",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_update_job_control]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"job_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_status": {
+									"value": "success",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "update_control_table_failure",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "extract_from_sqldb",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_update_job_control]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"job_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_id": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"task_status": {
+									"value": "Error",
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "get_last_run_date",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "update_control_table_running",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderStoredProcedureName": "[[control].[sp_get_last_run_date]",
+								"storedProcedureParameters": {
+									"job": {
+										"type": "String",
+										"value": "load_customer"
+									},
+									"task": {
+										"type": "String",
+										"value": {
+											"value": "@pipeline().Pipeline",
+											"type": "Expression"
+										}
+									}
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ds_generic_azure_sqldb",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "update_last_run_date",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "update_control_table_success",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[control].[sp_update_last_run_date]",
+							"storedProcedureParameters": {
+								"job": {
+									"value": "load_customer",
+									"type": "String"
+								},
+								"last_run_date": {
+									"value": {
+										"value": "@pipeline().TriggerTime",
+										"type": "Expression"
+									},
+									"type": "DateTime"
+								},
+								"task": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_azure_sql",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -220,7 +697,8 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_generic_azure_sqldb')]",
-				"[concat(variables('factoryId'), '/datasets/ds_generic_adls_csv')]"
+				"[concat(variables('factoryId'), '/datasets/ds_generic_adls_csv')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_azure_sql')]"
 			]
 		}
 	]
