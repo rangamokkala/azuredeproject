@@ -1,0 +1,47 @@
+{
+	"name": "pl_job_runner",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set_job_id",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "v_job_id",
+					"value": {
+						"value": "@pipeline().RunId",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_job": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"v_job_id": {
+				"type": "String"
+			},
+			"v_task_log": {
+				"type": "String"
+			},
+			"v_task_status": {
+				"type": "String"
+			},
+			"v_run_id": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "framework"
+		},
+		"annotations": []
+	}
+}
