@@ -155,6 +155,11 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
+					"items": {
+						"value": "@activity('get_task').output",
+						"type": "Expression"
+					},
+					"isSequential": true,
 					"activities": [
 						{
 							"name": "Set_task_log",
@@ -358,10 +363,62 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "pl_extract_from_sqlbd",
+									"referenceName": "pl_check_status",
 									"type": "PipelineReference"
 								},
-								"waitOnCompletion": true
+								"waitOnCompletion": true,
+								"parameters": {
+									"p_run_id": {
+										"value": "@variables('v_run_id')",
+										"type": "Expression"
+									},
+									"p_job": {
+										"value": "@pipeline().parameters.p_job",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "task_successfull",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "check_task_status",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "v_task_status",
+								"value": "SUCCESS"
+							}
+						},
+						{
+							"name": "task_failed",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "check_task_status",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "v_task_status",
+								"value": "FAILURE"
 							}
 						}
 					]
@@ -390,6 +447,8 @@
 		"folder": {
 			"name": "framework"
 		},
-		"annotations": []
+		"annotations": [
+			"@pipeplie().parameters.p_job"
+		]
 	}
 }
