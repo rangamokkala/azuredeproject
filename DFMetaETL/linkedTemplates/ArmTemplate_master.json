@@ -12,6 +12,14 @@
 			"metadata": "Secure string for 'connectionString' of 'ls_azure_sql'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=devmetaserver.database.windows.net;Initial Catalog=Meta-DB"
 		},
+		"ls_delete_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_delete'"
+		},
+		"ls_delete_data_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_delete_data'"
+		},
 		"ls_adls_devmeta1997_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://devmeta1997.dfs.core.windows.net/"
@@ -54,6 +62,12 @@
 				"parameters": {
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
+					},
+					"ls_delete_connectionString": {
+						"value": "[parameters('ls_delete_connectionString')]"
+					},
+					"ls_delete_data_connectionString": {
+						"value": "[parameters('ls_delete_data_connectionString')]"
 					},
 					"ls_azure_sql_connectionString": {
 						"value": "[parameters('ls_azure_sql_connectionString')]"
