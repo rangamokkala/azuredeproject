@@ -1,0 +1,52 @@
+{
+	"name": "ds_json1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blobcontainer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Json.txt",
+				"folderPath": "customer",
+				"container": "landing"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"type": "integer"
+				},
+				"properties": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"store_size": {
+							"type": "string"
+						}
+					}
+				},
+				"employees": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"emp_id": {
+								"type": "integer"
+							},
+							"emp_name": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
