@@ -12,6 +12,10 @@
 			"metadata": "Secure string for 'connectionString' of 'ls_azure_sql'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=devmetaserver.database.windows.net;Initial Catalog=Meta-DB"
 		},
+		"ls_blobcontainer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_blobcontainer'"
+		},
 		"ls_delete_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'ls_delete'"
@@ -67,6 +71,9 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"ls_blobcontainer_connectionString": {
+						"value": "[parameters('ls_blobcontainer_connectionString')]"
+					},
 					"ls_delete_connectionString": {
 						"value": "[parameters('ls_delete_connectionString')]"
 					},
@@ -94,26 +101,6 @@
 				}
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "DFMetaETL_ArmTemplate_1",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2018-02-01",
-			"properties": {
-				"mode": "incremental",
-				"templateLink": {
-					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
-					"factoryName": {
-						"value": "[parameters('factoryName')]"
-					}
-				}
-			},
-			"dependsOn": [
-				"[resourceId('Microsoft.Resources/deployments', 'DFMetaETL_ArmTemplate_0')]"
-			]
 		}
 	]
 }
