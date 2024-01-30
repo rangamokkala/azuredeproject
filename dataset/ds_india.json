@@ -1,0 +1,56 @@
+{
+	"name": "ds_india",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blobcontainer",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Src_Filename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().Src_Filename",
+					"type": "Expression"
+				},
+				"container": "landing"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Match Number",
+				"type": "String"
+			},
+			{
+				"name": "Round Number",
+				"type": "String"
+			},
+			{
+				"name": "Date",
+				"type": "String"
+			},
+			{
+				"name": "Location",
+				"type": "String"
+			},
+			{
+				"name": "Home Team",
+				"type": "String"
+			},
+			{
+				"name": "Away Team",
+				"type": "String"
+			}
+		]
+	}
+}
