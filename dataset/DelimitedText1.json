@@ -1,0 +1,51 @@
+{
+	"name": "DelimitedText1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blobcontainer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": "landing"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "ItemId",
+				"type": "String"
+			},
+			{
+				"name": "VartId",
+				"type": "String"
+			},
+			{
+				"name": "ItemName",
+				"type": "String"
+			},
+			{
+				"name": "VartName",
+				"type": "String"
+			},
+			{
+				"name": "WhNo",
+				"type": "String"
+			},
+			{
+				"name": "Zone",
+				"type": "String"
+			},
+			{
+				"name": "Bin",
+				"type": "String"
+			}
+		]
+	}
+}

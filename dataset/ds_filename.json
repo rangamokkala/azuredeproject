@@ -1,0 +1,60 @@
+{
+	"name": "ds_filename",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blobcontainer",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"container": "landing"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "ItemId",
+				"type": "String"
+			},
+			{
+				"name": "VartId",
+				"type": "String"
+			},
+			{
+				"name": "ItemName",
+				"type": "String"
+			},
+			{
+				"name": "VartName",
+				"type": "String"
+			},
+			{
+				"name": "WhNo",
+				"type": "String"
+			},
+			{
+				"name": "Zone",
+				"type": "String"
+			},
+			{
+				"name": "Bin",
+				"type": "String"
+			}
+		]
+	}
+}
