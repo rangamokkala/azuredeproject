@@ -12,6 +12,10 @@
 			"metadata": "Secure string for 'connectionString' of 'ls_azure_sql'",
 			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=devmetaserver.database.windows.net;Initial Catalog=Meta-DB"
 		},
+		"ls_azure_sql_db_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_azure_sql_db'"
+		},
 		"ls_blobcontainer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'ls_blobcontainer'"
@@ -70,6 +74,9 @@
 				"parameters": {
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
+					},
+					"ls_azure_sql_db_connectionString": {
+						"value": "[parameters('ls_azure_sql_db_connectionString')]"
 					},
 					"ls_blobcontainer_connectionString": {
 						"value": "[parameters('ls_blobcontainer_connectionString')]"
